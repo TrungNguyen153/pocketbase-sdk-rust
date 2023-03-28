@@ -235,9 +235,6 @@ impl PocketBase {
 
     async fn submit_subscriptions(&self) -> Result<()> {
         let id = self.get_sse_id().await?;
-        if self.realtime.is_none() {
-            return Err(Error::SSEClientNotExist);
-        }
         let keys = {
             let sub_locked = self.subscription.lock().await;
             sub_locked.keys().cloned().collect::<Vec<String>>()
