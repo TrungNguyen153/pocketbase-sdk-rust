@@ -1,0 +1,24 @@
+[package]
+name = "eventsource-client"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+futures = "0.3.27"
+hyper = {version = "0.14.25", features = [ "client", "http1", "tcp"]}
+hyper-rustls = { version = "0.23.2", features= ["rustls-native-certs"], optional = true }
+hyper-timeout = "0.4.1"
+log = "0.4.17"
+pin-project = "1.0.12"
+rand = "0.8.5"
+tokio = "1.26.0"
+
+[dev-dependencies]
+env_logger = "0.10.0"
+simplelog = "0.12.1"
+
+[features]
+default = ["rustls"]
+rustls = ["hyper-rustls", "hyper/http2"]
