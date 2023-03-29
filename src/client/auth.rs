@@ -87,4 +87,8 @@ impl PocketBase {
 
         Ok(())
     }
+
+    pub async fn refresh_token(&mut self) -> Result<()>{
+        todo!("Implement Refresh token")
+    }
 }

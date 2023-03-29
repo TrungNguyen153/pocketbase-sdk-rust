@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Map;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -71,5 +72,41 @@ impl User {
             admin_record: None,
             user_record: Some(user_record),
         }
+    }
+    pub fn is_valid(&self) -> bool {
+        if self.token.is_empty() {
+            return false;
+        }
+
+        let spliter: Vec<&str> = self.token.as_str().split('.').collect();
+        if spliter.len() != 3 {
+            return false;
+        }
+
+        let mut payload = spliter[1].to_string();
+
+        if payload.len() % 4 == 2 {
+            payload += "==";
+        } else if payload.len() % 4 == 3 {
+            payload += "=";
+        }
+
+        // not test yet
+        if let Ok(payload) = String::from_utf8(payload.as_bytes().to_vec()) {
+            if let Ok(json_value) = serde_json::from_str::<Map<String, serde_json::Value>>(&payload)
+            {
+                if let Some(expired_json) = json_value.get("exp") {
+                    if let Some(expired) = expired_json.as_i64() {
+                        use chrono::{DateTime, NaiveDateTime, Utc};
+                        if let Some(native_datetime) = NaiveDateTime::from_timestamp_millis(expired)
+                        {
+                            let datetime = DateTime::<Utc>::from_utc(native_datetime, Utc);
+                            return datetime > chrono::offset::Utc::now();
+                        }
+                    }
+                }
+            }
+        }
+        false
     }
 }
