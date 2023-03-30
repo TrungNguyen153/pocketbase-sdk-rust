@@ -15,10 +15,13 @@ pub enum Error {
     /// An invalid request parameter
     InvalidParameter(Box<dyn std::error::Error + Send + Sync + 'static>),
     RequestFailed(Box<dyn std::error::Error + Send + Sync + 'static>),
+    NotAuthenticated,
     AuthenticationError(Box<dyn std::error::Error + Send + Sync + 'static>),
     PocketBaseErrorResponse(PocketBaseErrorResponse),
+    PocketBaseImplementException(String),
     Timeout(String),
     SSEClientNotExist,
+    ShouldNot(String),
 }
 
 impl std::error::Error for Error {}
@@ -35,6 +38,11 @@ impl std::fmt::Display for Error {
             }
             Timeout(reason) => write!(f, "Timeout: {reason}"),
             SSEClientNotExist => write!(f, "SSE Client not created yet"),
+            NotAuthenticated => write!(f, "Not authenticated"),
+            ShouldNot(reason) => write!(f, "Should not: {reason}"),
+            PocketBaseImplementException(reason) => {
+                write!(f, "Pocketbase implementation error: {reason}")
+            }
         }
     }
 }

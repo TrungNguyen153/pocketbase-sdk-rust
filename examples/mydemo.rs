@@ -3,13 +3,14 @@ use std::{collections::HashMap, time::Duration};
 use log::debug;
 use pocketbase_sdk_rust::{client::PocketBase, error::Result, user::UserTypes};
 
+/// cargo run --example mydemo
 #[tokio::main]
 async fn main() -> Result<()> {
     env_logger::builder()
         .filter_level(log::LevelFilter::Debug)
         .init();
 
-    let mut pb = PocketBase::new("your addr")?;
+    let mut pb = PocketBase::new("http://167.71.201.1/")?;
 
     let mut new_user = HashMap::new();
     new_user.insert(
@@ -29,6 +30,10 @@ async fn main() -> Result<()> {
         UserTypes::User,
     )
     .await?;
+
+    debug!("Is Auth Store Valid: {}", pb.is_auth_store_valid());
+
+    pb.refresh_token().await?;
 
     pb.subscribe("users", "*", |event| async move {
         debug!("users Got event {:#?}", event);

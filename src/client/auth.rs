@@ -88,7 +88,26 @@ impl PocketBase {
         Ok(())
     }
 
-    pub async fn refresh_token(&mut self) -> Result<()>{
-        todo!("Implement Refresh token")
+    pub async fn refresh_token(&mut self) -> Result<()> {
+        if self.user.is_none() {
+            return Err(Error::NotAuthenticated);
+        }
+        let response = self
+            .send_post(
+                "/api/collections/users/auth-refresh",
+                &HashMap::<String, String>::default(),
+            )
+            .await?;
+        self.resolve_authorization_response(response, self.user.to_owned().unwrap().usertype)
+            .await?;
+
+        Ok(())
+    }
+
+    pub fn is_auth_store_valid(&self) -> bool {
+        if let Some(user) = &self.user {
+            return user.is_valid();
+        }
+        false
     }
 }

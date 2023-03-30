@@ -1,3 +1,7 @@
+use crate::error::{Error, Result};
+use base64::Engine;
+use chrono::{DateTime, NaiveDateTime, Utc};
+use log::debug;
 use serde::{Deserialize, Serialize};
 use serde_json::Map;
 
@@ -73,14 +77,30 @@ impl User {
             user_record: Some(user_record),
         }
     }
-    pub fn is_valid(&self) -> bool {
-        if self.token.is_empty() {
-            return false;
-        }
 
+    pub fn is_valid(&self) -> bool {
+        if let Ok(expired_datetime) = self.get_expired_datetime() {
+            let now = chrono::offset::Utc::now();
+            return expired_datetime > now;
+        }
+        false
+    }
+
+    // logic parse from: https://github.com/iluvadev/PocketBaseClient
+    pub fn get_expired_datetime(&self) -> Result<DateTime<Utc>> {
+        if self.token.is_empty() {
+            return Err(Error::ShouldNot(
+                "You was moved Token value. This my bad, im too lazy protect it by get/set"
+                    .to_string(),
+            ));
+        }
         let spliter: Vec<&str> = self.token.as_str().split('.').collect();
         if spliter.len() != 3 {
-            return false;
+            debug!("token invalid len part: {}", spliter.len());
+            return Err(Error::PocketBaseImplementException(
+                "Token no longer have 3 part '.' Seem PocketBase Change logic for Token"
+                    .to_string(),
+            ));
         }
 
         let mut payload = spliter[1].to_string();
@@ -91,22 +111,33 @@ impl User {
             payload += "=";
         }
 
-        // not test yet
-        if let Ok(payload) = String::from_utf8(payload.as_bytes().to_vec()) {
-            if let Ok(json_value) = serde_json::from_str::<Map<String, serde_json::Value>>(&payload)
-            {
-                if let Some(expired_json) = json_value.get("exp") {
-                    if let Some(expired) = expired_json.as_i64() {
-                        use chrono::{DateTime, NaiveDateTime, Utc};
-                        if let Some(native_datetime) = NaiveDateTime::from_timestamp_millis(expired)
-                        {
-                            let datetime = DateTime::<Utc>::from_utc(native_datetime, Utc);
-                            return datetime > chrono::offset::Utc::now();
+        debug!("payload string: {payload}");
+        if let Ok(decoded_base64) = base64::engine::general_purpose::STANDARD.decode(payload) {
+            if let Ok(payload) = String::from_utf8(decoded_base64) {
+                debug!("payload decoded string: {payload}");
+                if let Ok(json_value) =
+                    serde_json::from_str::<Map<String, serde_json::Value>>(&payload)
+                {
+                    debug!("success parse payload");
+                    if let Some(expired_json) = json_value.get("exp") {
+                        debug!("payload had json exp: {expired_json}");
+                        if let Some(expired) = expired_json.as_i64() {
+                            if let Some(native_datetime) =
+                                NaiveDateTime::from_timestamp_millis(expired * 1000)
+                            {
+                                let expired_datetime =
+                                    DateTime::<Utc>::from_utc(native_datetime, Utc);
+                                debug!("expired at: {expired_datetime}");
+                                return Ok(expired_datetime);
+                            }
                         }
                     }
                 }
             }
         }
-        false
+
+        Err(Error::PocketBaseImplementException(
+            "Failed parse".to_string(),
+        ))
     }
 }

@@ -85,8 +85,8 @@ impl PocketBase {
                     .body(serde_json::to_string(body).unwrap_or(String::default()));
                 let authed_req = match &self.user {
                     Some(user) => match &user.usertype {
-                        UserTypes::User => req.header(AUTHORIZATION, format!("{}", user.token)),
-                        UserTypes::Admin => req.header(AUTHORIZATION, format!("{}", user.token)),
+                        UserTypes::User => req.header(AUTHORIZATION, user.token.to_string()),
+                        UserTypes::Admin => req.header(AUTHORIZATION, user.token.to_string()),
                     },
                     None => req,
                 };
@@ -105,8 +105,8 @@ impl PocketBase {
                 let req = self.client.delete(endpoint);
                 let authed_req = match &self.user {
                     Some(user) => match &user.usertype {
-                        UserTypes::User => req.header(AUTHORIZATION, format!("{}", user.token)),
-                        UserTypes::Admin => req.header(AUTHORIZATION, format!("{}", user.token)),
+                        UserTypes::User => req.header(AUTHORIZATION, user.token.to_string()),
+                        UserTypes::Admin => req.header(AUTHORIZATION, user.token.to_string()),
                     },
                     None => req,
                 };

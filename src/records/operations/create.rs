@@ -8,11 +8,7 @@ use crate::{
 use super::GeneralPocketBaseResponse;
 
 impl PocketBase {
-    pub async fn create<
-        S: AsRef<str>,
-        T: Serialize + DeserializeOwned,
-        R: Serialize + DeserializeOwned,
-    >(
+    pub async fn create<S: AsRef<str>, T: Serialize, R: Serialize + DeserializeOwned>(
         &self,
         collection: S,
         model: &T,
@@ -26,6 +22,7 @@ impl PocketBase {
             .json::<GeneralPocketBaseResponse<R>>()
             .await
         {
+            // WARN: when R is JsonValue. this may return SuccessResponse because R can parse
             Ok(GeneralPocketBaseResponse::SuccessResponse(res)) => Ok(res),
             Ok(GeneralPocketBaseResponse::ErrorResponse(res)) => {
                 Err(Error::PocketBaseErrorResponse(res))
