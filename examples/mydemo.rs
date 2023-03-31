@@ -10,7 +10,7 @@ async fn main() -> Result<()> {
         .filter_level(log::LevelFilter::Debug)
         .init();
 
-    let mut pb = PocketBase::new("http://167.71.201.1/")?;
+    let mut pb = PocketBase::new("your db addr")?;
 
     let mut new_user = HashMap::new();
     new_user.insert(
