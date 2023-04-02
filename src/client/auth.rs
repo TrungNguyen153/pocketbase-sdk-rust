@@ -51,7 +51,7 @@ impl PocketBase {
         credentials.insert("password".to_string(), password.into());
 
         let response = self
-            .send_post("/api/admin/auth-with-password", &credentials)
+            .send_post("/api/admins/auth-with-password", &credentials)
             .await?;
 
         self.resolve_authorization_response(response, UserTypes::Admin)
